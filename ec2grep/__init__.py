@@ -12,7 +12,7 @@ import six
 
 executor = Executor(4)
 name = lambda i: {tag['Key']: tag['Value'] for tag in i.get('Tags', [])}.get('Name', '')
-ip = lambda i: i.get('PublicIpAddress', 'no-ip')
+ip = lambda i: i.get('PublicIpAddress')
 fmt = lambda i: "{} ({})".format(name(i), ip(i))
 DEFAULT_ATTRIBUTES = ['tag:Name', 'network-interface.addresses.association.public-ip', 'network-interface.addresses.private-ip-address', 'network-interface.private-dns-name']
 
@@ -29,7 +29,7 @@ def match_instances(region_name, query, attributes=DEFAULT_ATTRIBUTES):
     instance_lists = executor.map(get_instances, [
         {'Name': attr, 'Values': ['*{}*'.format(query)]} for attr in attributes
     ])
-    return list(itertools.chain.from_iterable(instance_lists))
+    return [i for i in itertools.chain.from_iterable(instance_lists) if ip(i)]
 
 
 def die(*args):
@@ -75,9 +75,6 @@ def ssh(ctx, query, ssh_args):
         click.echo("")
     else:
         choice = matches[0]
-
-    if 'PublicIpAddress' not in choice:
-        die("No public ip address")
 
     click.echo("sshing {}".format(fmt(choice)))
     os.execvp('ssh', ['ssh'] + [choice['PublicIpAddress']] + list(ssh_args))
