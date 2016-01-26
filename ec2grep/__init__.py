@@ -29,7 +29,8 @@ def match_instances(region_name, query, attributes=DEFAULT_ATTRIBUTES):
     instance_lists = executor.map(get_instances, [
         {'Name': attr, 'Values': ['*{}*'.format(query)]} for attr in attributes
     ])
-    return [i for i in itertools.chain.from_iterable(instance_lists) if ip(i)]
+    chained = (i for i in itertools.chain.from_iterable(instance_lists) if ip(i))
+    return sorted(chained, key=name)
 
 
 def die(*args):
