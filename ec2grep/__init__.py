@@ -8,6 +8,7 @@ import sys
 import click
 import boto3
 import itertools
+import six
 
 executor = Executor(4)
 name = lambda i: {tag['Key']: tag['Value'] for tag in i.get('Tags', [])}.get('Name', '')
@@ -39,7 +40,7 @@ def die(*args):
 def read_number(min_value, max_value):
     while True:
         try:
-            choice = click.getchar()
+            choice = six.moves.input()
             choice = int(choice)
             if not (min_value <= choice <= max_value):
                 raise ValueError("Invalid input")
