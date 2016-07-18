@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 from concurrent.futures import wait, ThreadPoolExecutor as Executor
 from functools import partial
 
@@ -78,21 +77,24 @@ def ssh(ctx, query, ssh_args):
         choice = matches[0]
 
     click.echo("sshing {}".format(fmt(choice)))
-    os.execvp('ssh', ['ssh'] + [choice['PublicIpAddress']] + list(ssh_args))
+    os.execvp('ssh', ['ssh', '-oStrictHostKeyChecking=no'] + [choice['PublicIpAddress']] + list(ssh_args))
 
 
 @cli.command()
 @click.argument('query')
-@click.option('--formatter', '-f', type=click.Choice(['extended', 'ip', 'name']), default='extended')
+@click.option('--delim', '-d', default='\n')
+@click.option('--formatter', '-f', default='extended')
+@click.option('--custom-format', '-c', is_flag=True, default=False)
 @click.pass_context
-def ls(ctx, query, formatter):
+def ls(ctx, query, formatter, delim, custom_format):
     matches = match_instances(ctx.obj['region'], query)
-    formatter = {'extended': fmt, 'ip': ip, 'name': name}[formatter]
+    formatters = {'extended': fmt, 'ip': ip, 'name': name}
+    if not custom_format:
+        formatter = formatter.join('{}')
     if not matches:
         die("No matches found")
 
-    for m in matches:
-        click.echo("{}".format(formatter(m)))
+    click.echo(delim.join(formatter.format(**{k: f(m) for k, f in formatters.iteritems()}) for m in matches))
 
 
 if __name__ == '__main__':
