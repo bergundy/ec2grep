@@ -12,6 +12,7 @@ import six
 executor = Executor(4)
 name = lambda i: {tag['Key']: tag['Value'] for tag in i.get('Tags', [])}.get('Name', '')
 ip = lambda i: i.get('PublicIpAddress')
+private_ip = lambda i: i.get('PrivateIpAddress')
 fmt = lambda i: "{} ({})".format(name(i), ip(i))
 DEFAULT_ATTRIBUTES = ['tag:Name', 'network-interface.addresses.association.public-ip', 'network-interface.addresses.private-ip-address', 'network-interface.private-dns-name']
 
@@ -88,7 +89,7 @@ def ssh(ctx, query, ssh_args):
 @click.pass_context
 def ls(ctx, query, formatter, delim, custom_format):
     matches = match_instances(ctx.obj['region'], query)
-    formatters = {'extended': fmt, 'ip': ip, 'name': name}
+    formatters = {'extended': fmt, 'ip': ip, 'name': name, 'private_ip': private_ip}
     if not custom_format:
         formatter = formatter.join('{}')
     if not matches:
