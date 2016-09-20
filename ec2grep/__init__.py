@@ -36,7 +36,7 @@ def match_instances(region_name, query, attributes=DEFAULT_ATTRIBUTES):
     instance_lists = executor.map(get_instances, [
         {'Name': attr, 'Values': ['*{}*'.format(query)]} for attr in attributes
     ])
-    chained = (i for i in itertools.chain.from_iterable(instance_lists) if public_ip(i))
+    chained = (i for i in itertools.chain.from_iterable(instance_lists) if 'PublicIpAddress' in i)
     return sorted(chained, key=name)
 
 
