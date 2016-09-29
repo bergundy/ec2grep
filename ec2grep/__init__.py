@@ -76,13 +76,13 @@ def cli(ctx, region):
 
 @cli.command()
 @click.option('--key', '-i')
-@click.option('--prefer-private-ip', '-p', is_flag=True, default=False)
+@click.option('--prefer-public-ip', '-p', is_flag=True, default=False)
 @click.argument('query')
 @click.argument('ssh_args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def ssh(ctx, key, prefer_private_ip, query, ssh_args):
-    get_ip = private_ip if prefer_private_ip else public_ip
-    fmt_match = extended_private if prefer_private_ip else extended_public
+def ssh(ctx, key, prefer_public_ip, query, ssh_args):
+    get_ip = public_ip if prefer_public_ip else private_ip
+    fmt_match = extended_public if prefer_public_ip else extended_private
     extra_args = []
 
     matches = match_instances(ctx.obj['region'], query)
@@ -109,7 +109,7 @@ def ssh(ctx, key, prefer_private_ip, query, ssh_args):
 @cli.command()
 @click.argument('query')
 @click.option('--delim', '-d', default='\n')
-@click.option('--formatter', '-f', default='extended_public')
+@click.option('--formatter', '-f', default='extended_private')
 @click.option('--custom-format', '-c', is_flag=True, default=False)
 @click.pass_context
 def ls(ctx, query, formatter, delim, custom_format):
