@@ -4,21 +4,15 @@ except ImportError:
     from distutils.core import setup
 
 setup(
-    name='ec2grep',
-    description='EC2 cli tool',
+    name='shh',
+    description='Shell helper in python',
     author='Roey Berman',
     author_email='roey.berman@gmail.com',
-    packages=['ec2grep'],
+    packages=['shh'],
     verion='0.1',
-    keywords=['ec2', 'cli', 'aws', 'ssh'],
+    keywords=['shell', 'sh'],
     install_requires=[
-        'boto3',
-        'futures',
-        'click',
     ],
     entry_points={
-        'console_scripts': [
-            'ec2 = ec2grep:cli'
-        ]
     }
 )
