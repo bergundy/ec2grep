@@ -76,11 +76,12 @@ def cli(ctx, region):
 
 @cli.command()
 @click.option('--key', '-i')
+@click.option('--login', '-l')
 @click.option('--prefer-public-ip', '-p', is_flag=True, default=False)
 @click.argument('query')
 @click.argument('ssh_args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def ssh(ctx, key, prefer_public_ip, query, ssh_args):
+def ssh(ctx, key, login, prefer_public_ip, query, ssh_args):
     get_ip = public_ip if prefer_public_ip else private_ip
     fmt_match = extended_public if prefer_public_ip else extended_private
     extra_args = []
@@ -103,6 +104,8 @@ def ssh(ctx, key, prefer_public_ip, query, ssh_args):
 
     if key:
         extra_args.extend(['-i', key])
+    if login:
+        extra_args.extend(['-l', login])
     os.execvp('ssh', ['ssh', '-oStrictHostKeyChecking=no'] + extra_args + [get_ip(choice)] + list(ssh_args))
 
 
