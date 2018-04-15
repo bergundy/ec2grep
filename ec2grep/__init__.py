@@ -78,10 +78,11 @@ def cli(ctx, region):
 @click.option('--key', '-i')
 @click.option('--login', '-l')
 @click.option('--prefer-public-ip', '-p', is_flag=True, default=False)
+@click.option('--pick', '-n', type=int)
 @click.argument('query')
 @click.argument('ssh_args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def ssh(ctx, key, login, prefer_public_ip, query, ssh_args):
+def ssh(ctx, key, login, pick, prefer_public_ip, query, ssh_args):
     get_ip = public_ip if prefer_public_ip else private_ip
     fmt_match = extended_public if prefer_public_ip else extended_private
     extra_args = []
@@ -93,10 +94,15 @@ def ssh(ctx, key, login, prefer_public_ip, query, ssh_args):
     if len(matches) > 1:
         for i, inst in enumerate(matches):
             click.echo("[{}] {}".format(i+1, fmt_match(inst)))
-        click.echo("pick an option [1-{}] ".format(len(matches)), nl=False)
-        index = read_number(1, len(matches)) - 1
+        if pick:
+            if pick > len(matches):
+                die('No option with index: {}'.format(pick))
+            index = pick
+        else:
+            click.echo("pick an option [1-{}] ".format(len(matches)), nl=False)
+            index = read_number(1, len(matches)) - 1
+            click.echo("")
         choice = matches[index]
-        click.echo("")
     else:
         choice = matches[0]
 
