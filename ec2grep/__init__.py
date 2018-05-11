@@ -4,6 +4,7 @@ import concurrent.futures
 import functools
 import itertools
 import operator
+import os
 import pprint
 import subprocess
 import sys
@@ -46,42 +47,85 @@ def cli(ctx, region):
 
 
 @cli.command()
-@click.option('--key', '-i')
+@click.option('--user', '-u')
+@click.option('--key', '-i', help='SSH key')
+@click.option('--ssh-config', '-F', help='SSH config file')
 @click.option('--prefer-public-ip', '-p', is_flag=True, default=False)
 @click.option('--parallel', is_flag=True, default=False)
 @click.argument('query')
 @click.argument('ssh_args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def ssh(ctx, key, prefer_public_ip, parallel, query, ssh_args):
+def ssh(ctx, user, key, ssh_config, prefer_public_ip, parallel, query, ssh_args):
+    validate_identity_parameters(user, key, ssh_config)
+
+    def op(host, host_count):
+        command = ['ssh', '-oStrictHostKeyChecking=no']
+        command.extend(['-i', key]) if key else command.extend(['-F', ssh_config])
+        if user:
+            command.extend(['-l', user])
+        command.extend([host] + list(ssh_args))
+        return command
+
+    run_op_for_hosts(ctx, prefer_public_ip, parallel, query, 'ssh', op)
+
+
+@cli.command()
+@click.option('--user', '-u')
+@click.option('--key', '-i', help='SSH key')
+@click.option('--ssh-config', '-F', help='SSH config file')
+@click.option('--prefer-public-ip', '-p', is_flag=True, default=False)
+@click.option('--parallel', is_flag=True, default=False)
+@click.option('--download', '-d', is_flag=True, default=False)
+@click.argument('query')
+@click.argument('source', type=str, required=True)
+@click.argument('target', type=str, required=False)
+@click.argument('scp_args', nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
+def scp(ctx, user, key, ssh_config, prefer_public_ip, parallel, query, download, source, target, scp_args):
+    validate_identity_parameters(user, key, ssh_config)
+
+    if download and not os.path.isdir(target):
+        die('Download target must be an existing directory')
+
+    def format_scp_remote_host_path(user, host, path):
+        return '{}@{}:{}'.format(user, host, path) if user else '{}:{}'.format(host, path)
+
+    def op(host, host_count):
+        command = ['scp', '-oStrictHostKeyChecking=no']
+        command.extend(['-i', key]) if key else command.extend(['-F', ssh_config])
+        command.extend(list(scp_args))
+        if download:
+            if host_count > 1:
+                # when downloading from multiple hosts, use a specific directory per each host
+                host_specific_dir_name = host.replace('.', '-')
+                full_target = os.path.join(target, host_specific_dir_name)
+                os.mkdir(full_target)
+            else:
+                full_target = target
+            command.extend(
+                [format_scp_remote_host_path(user, host, source), full_target])
+        else:
+            command.extend(
+                [source, format_scp_remote_host_path(user, host, target)])
+        return command
+
+    run_op_for_hosts(ctx, prefer_public_ip, parallel, query, 'scp', op)
+
+
+def run_op_for_hosts(ctx, prefer_public_ip, parallel, query, op_name, op):
     get_ip = public_ip if prefer_public_ip else private_ip
     fmt_match = extended_public if prefer_public_ip else extended_private
-    matches = match_instances(ctx.obj['region'], query)
-    if not matches:
-        die('No matches found')
-    if len(matches) > 1:
-        click.echo('[0] All')
-        for i, inst in enumerate(matches):
-            click.echo('[{}] {}'.format(i+1, fmt_match(inst)))
-        click.echo('select servers [0-{}] (comma separated) '.format(len(matches)), nl=False)
-        indices = read_numbers(0, len(matches))
-        if len(indices) == 1 and indices[0] == 0:
-            choices = matches
-        else:
-            choices = [matches[index - 1] for index in indices]
-        click.echo()
-    else:
-        choices = [matches[0]]
-    command = ['ssh', '-oStrictHostKeyChecking=no']
-    if key:
-        command.extend(['-i', key])
+
+    choices = get_hosts_choice(ctx, fmt_match, query)
+
     if parallel and len(choices) > 1:
-        message = 'sshing:\n{}'.format(pprint.pformat([fmt_match(c) for c in choices]))
+        message = 'running {}:\n{}'.format(op_name, pprint.pformat([fmt_match(c) for c in choices]))
         click.echo(message)
         click.echo()
         processes = []
         for choice in choices:
             ip = get_ip(choice)
-            p = subprocess.Popen(command + [ip] + list(ssh_args),
+            p = subprocess.Popen(op(ip, len(choices)),
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
             stdout_consumer = OutputConsumer(input=p.stdout, output=sys.stdout, ip=ip)
@@ -93,11 +137,31 @@ def ssh(ctx, key, prefer_public_ip, parallel, query, ssh_args):
             p['err'].join()
     else:
         for choice in choices:
-            message = 'sshing {}'.format(fmt_match(choice))
+            message = 'running {} {}'.format(op_name, fmt_match(choice))
             click.echo()
             click.echo(message)
             click.echo(u'\u2500' * len(message))
-            subprocess.call(command + [get_ip(choice)] + list(ssh_args))
+            subprocess.call(op(get_ip(choice), len(choices)))
+
+
+def get_hosts_choice(ctx, fmt_match, query):
+    matches = match_instances(ctx.obj['region'], query)
+    if not matches:
+        die('No matches found')
+    if len(matches) > 1:
+        click.echo('[0] All')
+        for i, inst in enumerate(matches):
+            click.echo('[{}] {}'.format(i + 1, fmt_match(inst)))
+        click.echo('select servers [0-{}] (comma separated) '.format(len(matches)), nl=False)
+        indices = read_numbers(0, len(matches))
+        if len(indices) == 1 and indices[0] == 0:
+            choices = matches
+        else:
+            choices = [matches[index - 1] for index in indices]
+        click.echo()
+    else:
+        choices = [matches[0]]
+    return choices
 
 
 @cli.command()
@@ -150,6 +214,13 @@ def read_numbers(min_value, max_value):
         except ValueError as e:
             click.echo(str(e), err=True)
             continue
+
+
+def validate_identity_parameters(user, key, ssh_config):
+    if not key and not ssh_config:
+        die('Must supply either SSH key or SSH config file')
+    if ssh_config and (user or key):
+        die("The ssh-config option is mutually exclusive with the user and key options")
 
 
 class OutputConsumer(object):
