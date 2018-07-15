@@ -78,7 +78,7 @@ def cli(ctx, region):
 @click.option('--key', '-i')
 @click.option('--login', '-l')
 @click.option('--prefer-public-ip', '-p', is_flag=True, default=False)
-@click.option('--pick', '-n', type=int)
+@click.option('--pick', '-n', type=click.IntRange(1, 999999))
 @click.argument('query')
 @click.argument('ssh_args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
@@ -92,13 +92,13 @@ def ssh(ctx, key, login, pick, prefer_public_ip, query, ssh_args):
         die("No matches found")
 
     if len(matches) > 1:
-        for i, inst in enumerate(matches):
-            click.echo("[{}] {}".format(i+1, fmt_match(inst)))
-        if pick:
-            if pick > len(matches):
+        if pick is not None:
+            index = pick - 1
+            if index > len(matches):
                 die('No option with index: {}'.format(pick))
-            index = pick
         else:
+            for i, inst in enumerate(matches):
+                click.echo("[{}] {}".format(i+1, fmt_match(inst)))
             click.echo("pick an option [1-{}] ".format(len(matches)), nl=False)
             index = read_number(1, len(matches)) - 1
             click.echo("")
