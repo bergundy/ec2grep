@@ -11,11 +11,7 @@ setup(
     packages=['ec2grep'],
     verion='0.1',
     keywords=['ec2', 'cli', 'aws', 'ssh'],
-    install_requires=[
-        'boto3',
-        'futures',
-        'click',
-    ],
+    install_requires=[l.strip() for l in open('requirements.txt').readlines()],
     entry_points={
         'console_scripts': [
             'ec2 = ec2grep:cli'
