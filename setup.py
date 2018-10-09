@@ -10,6 +10,7 @@ setup(
     author_email='roey.berman@gmail.com',
     packages=['ec2grep'],
     verion='0.1',
+    include_package_data=True,
     keywords=['ec2', 'cli', 'aws', 'ssh'],
     install_requires=[l.strip() for l in open('requirements.txt').readlines()],
     entry_points={
