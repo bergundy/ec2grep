@@ -24,8 +24,8 @@ DEFAULT_ATTRIBUTES = (
 
 
 name = (lambda i: {tag['Key']: tag['Value'] for tag in i.get('Tags', [])}.get('Name', ''))
-public_ip = operator.itemgetter('PublicIpAddress')
 private_ip = operator.itemgetter('PrivateIpAddress')
+public_ip = (lambda i: getattr(i, 'PublicIpAddress', None))
 extended_public = (lambda i: '{} ({})'.format(name(i), public_ip(i)))
 extended_private = (lambda i: '{} ({})'.format(name(i), private_ip(i)))
 extended = (lambda i: '{} (public: {}, private: {})'.format(name(i), public_ip(i), private_ip(i)))
@@ -176,7 +176,7 @@ def ls(ctx, formatter, delim, custom_format, query):
         die('No matches found')
     if not custom_format:
         formatter = formatter.join('{}')
-    click.echo(delim.join(formatter.format(**{k: f(m) for k, f in formatters.iteritems()}) for m in matches))
+    click.echo(delim.join(formatter.format(**{k: f(m) for k, f in formatters.items()}) for m in matches))
 
 
 def _get_instances(ec2, filter_):
@@ -192,7 +192,7 @@ def match_instances(region_name, query, attributes=DEFAULT_ATTRIBUTES):
         instance_lists = executor.map(get_instances, [
             {'Name': attr, 'Values': ['*{}*'.format(query)]} for attr in attributes
         ])
-    chained = (i for i in itertools.chain.from_iterable(instance_lists) if 'PublicIpAddress' in i)
+    chained = (i for i in itertools.chain.from_iterable(instance_lists))
     return sorted(chained, key=name)
 
 
