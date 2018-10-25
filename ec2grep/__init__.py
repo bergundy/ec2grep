@@ -24,8 +24,8 @@ DEFAULT_ATTRIBUTES = (
 
 
 name = (lambda i: {tag['Key']: tag['Value'] for tag in i.get('Tags', [])}.get('Name', ''))
-private_ip = operator.itemgetter('PrivateIpAddress')
-public_ip = (lambda i: getattr(i, 'PublicIpAddress', None))
+private_ip = (lambda i: i.get('PrivateIpAddress', None))
+public_ip = (lambda i: i.get('PublicIpAddress', None))
 extended_public = (lambda i: '{} ({})'.format(name(i), public_ip(i)))
 extended_private = (lambda i: '{} ({})'.format(name(i), private_ip(i)))
 extended = (lambda i: '{} (public: {}, private: {})'.format(name(i), public_ip(i), private_ip(i)))
@@ -192,7 +192,7 @@ def match_instances(region_name, query, attributes=DEFAULT_ATTRIBUTES):
         instance_lists = executor.map(get_instances, [
             {'Name': attr, 'Values': ['*{}*'.format(query)]} for attr in attributes
         ])
-    chained = (i for i in itertools.chain.from_iterable(instance_lists))
+    chained = (i for i in itertools.chain.from_iterable(instance_lists) if 'PublicIpAddress' in i or 'PrivateIpAddress' in i)
     return sorted(chained, key=name)
 
 
