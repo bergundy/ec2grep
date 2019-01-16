@@ -219,8 +219,8 @@ def read_numbers(min_value, max_value):
 def validate_identity_parameters(user, key, ssh_config):
     if not key and not ssh_config:
         die('Must supply either SSH key or SSH config file')
-    if ssh_config and (user or key):
-        die("The ssh-config option is mutually exclusive with the user and key options")
+    if ssh_config and key:
+        die("The ssh-config option is mutually exclusive with the key option")
 
 
 class OutputConsumer(object):
