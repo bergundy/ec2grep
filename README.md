@@ -15,10 +15,16 @@ Basic usage, find by name tag, external / internal IP, DNS
 ec2 ls my-hostname
 ```
 
-Custom formatter (name, ip, extended)
+Custom formatter
 ```bash
-ec2 ls --format=name my-hostname
+ec2 ls --formatter=name my-hostname
 ```
+Options:
+* extended_private
+* extended_public
+* public_ip
+* private_ip
+* name
 
 ##### ssh
 Open an SSH session
@@ -35,3 +41,21 @@ ec2 ssh my-hostname -- w
 ```bash
 ec2 --region us-west-2 ls my-hostname
 ```
+
+##### Development
+Fork and clone this repo
+```bash
+git clone git@github.com:your-org/ec2grep.git
+```
+Create a virtualenv
+```bash
+python -m virtualenv venv
+```
+Source it and install dependencies
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
+...
+
+Profit
