@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from concurrent.futures import wait, ThreadPoolExecutor as Executor
+from concurrent.futures import ThreadPoolExecutor as Executor
 from functools import partial
 from operator import itemgetter
 
