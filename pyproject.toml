@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "CLI tool for working with EC2"
 authors = ["Roey Berman <roey.berman@gmail.com>"]
 
+[tool.poetry.scripts]
+ec2grep = "ec2grep:cli"
+
 [tool.poetry.dependencies]
 python = "^3.6"
 boto3 = "^1.16.35"

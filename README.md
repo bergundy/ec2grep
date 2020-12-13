@@ -42,15 +42,10 @@ ec2 ssh my-hostname -- w
 ec2 --region us-west-2 ls my-hostname
 ```
 
-##### Development
-Create a virtualenv
+##### Development / Running Locally
 ```bash
-python -m virtualenv venv
-```
-Source it and install dependencies
-```bash
-source venv/bin/activate
 poetry install
+poetry run ec2grep
 ```
 ...
 
