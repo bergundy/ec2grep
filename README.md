@@ -45,7 +45,7 @@ ec2 --region us-west-2 ls my-hostname
 ##### Development / Running Locally
 ```bash
 poetry install
-poetry run ec2grep
+poetry run ec2
 ```
 ...
 
