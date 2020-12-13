@@ -43,10 +43,6 @@ ec2 --region us-west-2 ls my-hostname
 ```
 
 ##### Development
-Fork and clone this repo
-```bash
-git clone git@github.com:your-org/ec2grep.git
-```
 Create a virtualenv
 ```bash
 python -m virtualenv venv
@@ -54,7 +50,7 @@ python -m virtualenv venv
 Source it and install dependencies
 ```bash
 source venv/bin/activate
-pip install -r requirements.txt
+poetry install
 ```
 ...
 
