@@ -3,6 +3,7 @@ name = "ec2grep"
 version = "0.1.0"
 description = "CLI tool for working with EC2"
 authors = ["Roey Berman <roey.berman@gmail.com>"]
+keywords=["ec2", "cli", "aws", "ssh"]
 
 [tool.poetry.scripts]
 ec2 = "ec2grep:cli"
