@@ -1,3 +1,5 @@
+⚠️ This project is no longer being maintained ⚠️
+
 ## ec2grep - EC2 cli tool
 
 ### Install
